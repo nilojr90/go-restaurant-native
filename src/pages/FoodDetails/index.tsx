@@ -74,6 +74,21 @@ const FoodDetails: React.FC = () => {
   useEffect(() => {
     async function loadFood(): Promise<void> {
       // Load a specific food with extras based on routeParams id
+      const { id } = routeParams;
+
+      const response = await api.get(`/foods/${id}`);
+      let food: Food = response.data;
+      const extras: Extra[] = food.extras;
+
+      food.formattedPrice = formatValue(food.price);
+      setFood(food);
+
+      setExtras(extras.map((extra: Extra) => ({
+        ...extra,
+        quantity: 0,
+      })));
+
+      setFoodQuantity(1);
     }
 
     loadFood();
@@ -81,26 +96,47 @@ const FoodDetails: React.FC = () => {
 
   function handleIncrementExtra(id: number): void {
     // Increment extra quantity
+    const extraIndex = extras.findIndex((extra) => (extra.id == id));
+    let newExtras = [...extras];
+    newExtras[extraIndex].quantity++;
+
+    setExtras(newExtras);
   }
 
   function handleDecrementExtra(id: number): void {
     // Decrement extra quantity
+    const extraIndex = extras.findIndex((extra) => (extra.id == id));
+    let newExtras = [...extras];
+    newExtras[extraIndex].quantity--;
+
+    setExtras(newExtras);
   }
 
   function handleIncrementFood(): void {
     // Increment food quantity
+    setFoodQuantity(foodQuantity + 1);
   }
 
   function handleDecrementFood(): void {
     // Decrement food quantity
+    if (foodQuantity <= 1) {
+      setFoodQuantity(1);
+    } else {
+      setFoodQuantity(foodQuantity - 1);
+    }
   }
 
   const toggleFavorite = useCallback(() => {
     // Toggle if food is favorite or not
+    setIsFavorite(!isFavorite);
   }, [isFavorite, food]);
 
   const cartTotal = useMemo(() => {
     // Calculate cartTotal
+    const extraValue = extras.map((extra) => (extra.value * extra.quantity));
+    const extraTotal = extraValue.reduce(((i, j) => (i + j)), 0);
+
+    return formatValue((food.price + extraTotal) * foodQuantity);
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
@@ -154,6 +190,7 @@ const FoodDetails: React.FC = () => {
           {extras.map(extra => (
             <AdittionalItem key={extra.id}>
               <AdittionalItemText>{extra.name}</AdittionalItemText>
+              {/* <AdittionalItemText>{formatValue(extra.value)}</AdittionalItemText> */}
               <AdittionalQuantity>
                 <Icon
                   size={15}
