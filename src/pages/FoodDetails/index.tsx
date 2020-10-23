@@ -56,6 +56,7 @@ interface Food {
   description: string;
   price: number;
   image_url: string;
+  thumbnail_url: string;
   formattedPrice: string;
   extras: Extra[];
 }
@@ -90,10 +91,18 @@ const FoodDetails: React.FC = () => {
 
       setFoodQuantity(1);
 
-      const isFavoriteResponse = await api.get(`/favorites/${id}`);
-      if (isFavoriteResponse.status === 200) {
-        setIsFavorite(true);
-      }
+      await api.get(`/favorites/${id}`)
+        .then((response) => {
+          if (response.status === 200) {
+            setIsFavorite(true);
+          } else {
+            setIsFavorite(false);
+          }
+        })
+        .catch((e) => {
+          console.log(e);
+        });
+
     }
 
     loadFood();
@@ -101,23 +110,23 @@ const FoodDetails: React.FC = () => {
 
   function handleIncrementExtra(id: number): void {
     // Increment extra quantity
-    const extraIndex = extras.findIndex((extra) => (extra.id == id));
+    const index = extras.findIndex((extra) => (extra.id === id));
     let newExtras = [...extras];
-    newExtras[extraIndex].quantity++;
+    newExtras[index].quantity = extras[index].quantity + 1;
 
     setExtras(newExtras);
   }
 
   function handleDecrementExtra(id: number): void {
     // Decrement extra quantity
-    const extraIndex = extras.findIndex((extra) => (extra.id == id));
+    const index = extras.findIndex((extra) => (extra.id === id));
 
-    if (extras[extraIndex].quantity <= 0) {
+    if (extras[index].quantity === 0) {
       return;
     }
 
     let newExtras = [...extras];
-    newExtras[extraIndex].quantity--;
+    newExtras[index].quantity = extras[index].quantity - 1;
 
     setExtras(newExtras);
   }
@@ -146,7 +155,8 @@ const FoodDetails: React.FC = () => {
           'description': food.description,
           'price': food.price,
           'image_url': food.image_url,
-          'extras': food.extras,
+          'thumbnail_url': food.thumbnail_url,
+          'extras': extras,
         }
       )
         .catch((e) => { console.log(e) });
@@ -164,26 +174,26 @@ const FoodDetails: React.FC = () => {
 
   const cartTotal = useMemo(() => {
     // Calculate cartTotal
-    let extraTotal = 0;
+    let extraTotal = 0.0;
 
     extras.forEach(extra => {
       extraTotal += extra.value * extra.quantity;
     });
 
-    return formatValue((food.price + extraTotal) * foodQuantity);
+    return (food.price + extraTotal) * foodQuantity;
   }, [extras, food, foodQuantity]);
 
   async function handleFinishOrder(): Promise<void> {
     // Finish the order and save on the API
-    const response = api.post('/orders',
+    const response = await api.post('/orders',
       {
         'product_id': food.id,
         'quantity': foodQuantity,
         'name': food.name,
         'description': food.description,
         'price': cartTotal,
-        'image_url': food.image_url,
-        'extras': food.extras,
+        'thumbnail_url': food.thumbnail_url,
+        'extras': extras,
       })
       .catch((e) => { console.log(e) });
 
@@ -265,7 +275,7 @@ const FoodDetails: React.FC = () => {
         <TotalContainer>
           <Title>Total do pedido</Title>
           <PriceButtonContainer>
-            <TotalPrice testID="cart-total">{cartTotal}</TotalPrice>
+            <TotalPrice testID="cart-total">{formatValue(cartTotal)}</TotalPrice>
             <QuantityContainer>
               <Icon
                 size={15}
