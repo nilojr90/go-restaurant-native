@@ -106,6 +106,11 @@ const FoodDetails: React.FC = () => {
   function handleDecrementExtra(id: number): void {
     // Decrement extra quantity
     const extraIndex = extras.findIndex((extra) => (extra.id == id));
+
+    if (extras[extraIndex].quantity <= 0) {
+      return;
+    }
+
     let newExtras = [...extras];
     newExtras[extraIndex].quantity--;
 
@@ -133,8 +138,11 @@ const FoodDetails: React.FC = () => {
 
   const cartTotal = useMemo(() => {
     // Calculate cartTotal
-    const extraValue = extras.map((extra) => (extra.value * extra.quantity));
-    const extraTotal = extraValue.reduce(((i, j) => (i + j)), 0);
+    let extraTotal = 0;
+
+    extras.forEach(extra => {
+      extraTotal += extra.value * extra.quantity;
+    });
 
     return formatValue((food.price + extraTotal) * foodQuantity);
   }, [extras, food, foodQuantity]);
@@ -190,7 +198,7 @@ const FoodDetails: React.FC = () => {
           {extras.map(extra => (
             <AdittionalItem key={extra.id}>
               <AdittionalItemText>{extra.name}</AdittionalItemText>
-              {/* <AdittionalItemText>{formatValue(extra.value)}</AdittionalItemText> */}
+              <AdittionalItemText>{formatValue(extra.value)}</AdittionalItemText>
               <AdittionalQuantity>
                 <Icon
                   size={15}
