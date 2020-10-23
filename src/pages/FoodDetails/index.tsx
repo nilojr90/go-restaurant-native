@@ -175,6 +175,21 @@ const FoodDetails: React.FC = () => {
 
   async function handleFinishOrder(): Promise<void> {
     // Finish the order and save on the API
+    const response = api.post('/orders',
+      {
+        'product_id': food.id,
+        'quantity': foodQuantity,
+        'name': food.name,
+        'description': food.description,
+        'price': cartTotal,
+        'image_url': food.image_url,
+        'extras': food.extras,
+      })
+      .catch((e) => { console.log(e) });
+
+    console.log(response);
+
+    navigation.navigate('Orders');
   }
 
   // Calculate the correct icon name
