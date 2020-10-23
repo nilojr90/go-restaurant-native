@@ -89,6 +89,11 @@ const FoodDetails: React.FC = () => {
       })));
 
       setFoodQuantity(1);
+
+      const isFavoriteResponse = await api.get(`/favorites/${id}`);
+      if (isFavoriteResponse.status === 200) {
+        setIsFavorite(true);
+      }
     }
 
     loadFood();
@@ -133,6 +138,27 @@ const FoodDetails: React.FC = () => {
 
   const toggleFavorite = useCallback(() => {
     // Toggle if food is favorite or not
+    if (!isFavorite) {
+      const response = api.post('/favorites',
+        {
+          'id': food.id,
+          'name': food.name,
+          'description': food.description,
+          'price': food.price,
+          'image_url': food.image_url,
+          'extras': food.extras,
+        }
+      )
+        .catch((e) => { console.log(e) });
+
+      console.log(response);
+    } else {
+      const response = api.delete(`/favorites/${food.id}`)
+        .catch((e) => { console.log(e) });
+
+      console.log(response);
+    }
+
     setIsFavorite(!isFavorite);
   }, [isFavorite, food]);
 
